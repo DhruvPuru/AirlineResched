@@ -8,6 +8,8 @@ import java.util.*;
 public class DataGenerator {
 
     public static HashMap<String, Integer> airportIds;
+    //Key = airport-airport (from-to). Value = {departure, capacity etc...}
+    public static HashMap<String, List<FlightInfo>> flightsToInfo;
     public static String[] airports = {"ORD","JFK","LAX","MIA","ATL","IAH"};
     public static ArrayList<String> flight_paths;
     public static ArrayList<String> flight_times;
@@ -16,6 +18,7 @@ public class DataGenerator {
 
     public static int NUM_AIRPORTS = airports.length;
     public static double TAXI_TIME = 0.5;
+    public static int DEFAULT_CAPACITY = 100;
 
     public static void main (String[] args) {
         setup();
@@ -27,14 +30,27 @@ public class DataGenerator {
             for (int j = 0; j < NUM_AIRPORTS; j++) {
                 for (int k = 0; k < NUM_AIRPORTS; k++) {
                     if (i != j && k != j) {
+                        //Create schedule
                         String flight = airports[i] + "-" + airports[j] + "-" + airports[k];
-                        double a_leave = roundTo2Dps(generateRandomDeparture());
+                        double a_leave = roundTo2Dps(Math.max(generateNormalizedDeparture(), 0));
                         double b_arrive = roundTo2Dps(a_leave + airbornTimes[i][j] / 60.0);
-                        double b_leave = roundTo2Dps(b_arrive + TAXI_TIME + Math.min(0, gaussianTaxiOverhead()));
+                        double b_leave = roundTo2Dps(b_arrive + TAXI_TIME + Math.max(0, gaussianTaxiOverhead()));
                         double c_arrive = roundTo2Dps(b_leave + airbornTimes[j][k] / 60.0);
+                        if (b_arrive > b_leave || airports[i].equals(airports[j]) || airports[j].equals(airports[k])) {
+                            System.out.println("HOOGA BOOGA");
+                        }
                         String time = a_leave + "-" + b_arrive + "-" + b_leave + "-" + c_arrive;
                         flight_paths.add(flight);
                         flight_times.add(time);
+
+                        //Create mapping of flights
+                        //TODO: make flight capacities reflect some distribution + hard/soft constraints
+                        String flight1 = airports[i] + ":" + airports[j];
+                        FlightInfo f1 = new FlightInfo(a_leave, b_arrive, DEFAULT_CAPACITY);
+                        String time2 = b_leave + "-" + c_arrive;
+                        FlightInfo f2 = new FlightInfo(b_leave, c_arrive, DEFAULT_CAPACITY);
+
+//                        List<FlightInfo> flight1Candidates =
                     }
                 }
             }
@@ -53,12 +69,17 @@ public class DataGenerator {
         return random.nextGaussian();
     }
 
+    public static double generateNormalizedDeparture() {
+        return 12 + (6 * random.nextGaussian());
+    }
+
     public static double generateRandomDeparture() {
         return 24 * Math.random();
     }
 
     private static void setup() {
         airportIds = new HashMap<String, Integer>();
+        flightsToInfo = new HashMap<String, List<FlightInfo>>();
         flight_paths = new ArrayList<String>();
         flight_times = new ArrayList<String>();
 

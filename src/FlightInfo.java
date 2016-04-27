@@ -21,6 +21,10 @@ public class FlightInfo {
         this.load = 0;
     }
 
+    public boolean isFull() {
+        return load == capacity;
+    }
+
     public String toString() {
         return id + ":" + fromTo + ":" + departure + ":" + arrival + ":" + load + "/" + capacity + "\n";
     }

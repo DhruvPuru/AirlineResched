@@ -10,19 +10,24 @@ public class DataGenerator {
     public static HashMap<String, Integer> airportIds;
     //Key = airport-airport (from-to). Value = {departure, capacity etc...}
     public static HashMap<String, List<FlightInfo>> flightData;
+    public static ArrayList<Itinerary> passengerItinerary;
     public static String[] airports = {"ORD","JFK","LAX","MIA","ATL","IAH"};
     public static double[][] airbornTimes;
     public static double[][] delayTimes;
+    public static int[][] flightCapacities;
     public static Random random;
+    public static int totalPassengers;
+    public static int passengerId;
 
     public static int NUM_AIRPORTS = airports.length;
     public static double TAXI_TIME = 0.5;
-    public static int DEFAULT_CAPACITY = 100;
+    public static double TRANSIT_TIME = 0.5;
 
     public static void main (String[] args) {
         setup();
         generateData();
-        printData();
+//        printData();
+        printItinerary();
     }
 
     public static void generateData() {
@@ -41,9 +46,9 @@ public class DataGenerator {
                         //Create mapping of flights
                         //TODO: make flight capacities reflect some distribution + hard/soft constraints
                         String flight1 = airports[i] + ":" + airports[j];
-                        FlightInfo flightInfo1 = new FlightInfo(flight1, a_leave, b_arrive, DEFAULT_CAPACITY);
+                        FlightInfo flightInfo1 = new FlightInfo(flight1, a_leave, b_arrive, flightCapacities[i][j]);
                         String flight2 = airports[j] + ":" + airports[k];
-                        FlightInfo flightInfo2 = new FlightInfo(flight2, b_leave, c_arrive, DEFAULT_CAPACITY);
+                        FlightInfo flightInfo2 = new FlightInfo(flight2, b_leave, c_arrive, flightCapacities[i][j]);
 
                         List<FlightInfo> sameJourneyAsFlight1 = flightData.get(flight1);
                         if (sameJourneyAsFlight1 == null) {
@@ -58,10 +63,74 @@ public class DataGenerator {
                             flightData.put(flight2, sameJourneyAsFlight2);
                         }
                         sameJourneyAsFlight2.add(flightInfo2);
+                        //Update total passengers in model
+                        totalPassengers += Math.min(flightCapacities[i][j], flightCapacities[j][k]);
                     }
                 }
             }
         }
+
+        //Map passenger to flight path from airport A to B to C s.t A != B and B!= C
+        //TODO:remove assumption that all passengers have connecting flights
+        for (int p = 0; p < totalPassengers; p++) {
+            boolean matched = false;
+            while (!matched) {
+                //Select A, B and C at random
+                int a = randomIndex(6);
+                int b = a;
+                while (a == b) {
+                    b = randomIndex(6);
+                }
+                int c = b;
+                while (c == b) {
+                    c = randomIndex(6);
+                }
+
+                String flight1 = airports[a] + ":" + airports[b];
+                String flight2 = airports[b] + ":" + airports[c];
+                List<FlightInfo> candidatesForFlight1 = flightData.get(flight1);
+                List<FlightInfo> candidatesForFlight2 = flightData.get(flight2);
+
+                int[] sequence1 = generateRandomPermutation(candidatesForFlight1.size());
+                int[] sequence2 = generateRandomPermutation(candidatesForFlight2.size());
+                for (int i = 0; i < sequence1.length && !matched; i++) {
+                    for (int j = 0; j < sequence2.length && !matched; j++) {
+                        FlightInfo flight1Candidate = candidatesForFlight1.get(sequence1[i]);
+                        FlightInfo flight2Candidate = candidatesForFlight2.get(sequence2[j]);
+                        if (flight1Candidate.arrival <= TRANSIT_TIME + flight2Candidate.departure &&
+                                !flight1Candidate.isFull() && !flight2Candidate.isFull()) {
+                            passengerItinerary.add(new Itinerary(flight1Candidate, flight2Candidate));
+                            flight1Candidate.load++;
+                            flight2Candidate.load++;
+                            matched = true;
+                        }
+                    }
+                }
+            }
+            passengerId++;
+        }
+    }
+
+    public static void printItinerary() {
+        for (Itinerary i : passengerItinerary) {
+            System.out.println(i);
+        }
+    }
+
+    public static int[] generateRandomPermutation(int n) {
+        int[] result = new int[n];
+        for (int i = 0; i < n; i++) {
+            int d = random.nextInt(i+1);
+            result[i] = result[d];
+            result[d] = i;
+        }
+        return result;
+    }
+
+
+    public static int randomIndex(double max) {
+        double offset = 0.000001;
+        return (int) Math.floor((max-offset) * random.nextDouble());
     }
 
     public static double roundTo2Dps(double d) {
@@ -87,8 +156,9 @@ public class DataGenerator {
     }
 
     private static void setup() {
-        airportIds = new HashMap<String, Integer>();
-        flightData = new HashMap<String, List<FlightInfo>>();
+        airportIds = new HashMap<>();
+        flightData = new HashMap<>();
+        passengerItinerary = new ArrayList<>();
 
         random = new Random();
         for (int i = 0; i < NUM_AIRPORTS; i++) {
@@ -114,6 +184,17 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     double timeFromIToJ = in.nextDouble();
                     delayTimes[i][j] = timeFromIToJ;
+                }
+            }
+            in.close();
+
+            File flightCapacitiesFile = new File("flight-capacities.txt");
+            in = new Scanner(flightCapacitiesFile);
+            flightCapacities = new int[NUM_AIRPORTS][NUM_AIRPORTS];
+            for (int i = 0; i < NUM_AIRPORTS; i++) {
+                for (int j = 0; j < NUM_AIRPORTS; j++) {
+                    int capacityIToJ = in.nextInt();
+                    flightCapacities[i][j] = capacityIToJ;
                 }
             }
             in.close();

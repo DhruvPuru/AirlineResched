@@ -14,6 +14,7 @@ public class DataGenerator {
     public static ArrayList<String> flight_paths;
     public static ArrayList<String> flight_times;
     public static double[][] airbornTimes;
+    public static double[][] delayTimes;
     public static Random random;
 
     public static int NUM_AIRPORTS = airports.length;
@@ -33,12 +34,12 @@ public class DataGenerator {
                         //Create schedule
                         String flight = airports[i] + "-" + airports[j] + "-" + airports[k];
                         double a_leave = roundTo2Dps(Math.max(generateNormalizedDeparture(), 0));
-                        double b_arrive = roundTo2Dps(a_leave + airbornTimes[i][j] / 60.0);
+                        double b_arrive = roundTo2Dps(a_leave + airbornTimes[i][j]/ 60.0);
                         double b_leave = roundTo2Dps(b_arrive + TAXI_TIME + Math.max(0, gaussianTaxiOverhead()));
-                        double c_arrive = roundTo2Dps(b_leave + airbornTimes[j][k] / 60.0);
-                        if (b_arrive > b_leave || airports[i].equals(airports[j]) || airports[j].equals(airports[k])) {
-                            System.out.println("HOOGA BOOGA");
-                        }
+                        //Change b_arrive to reflect delays
+                        b_arrive = roundTo2Dps(b_arrive + delayTimes[i][j]/ 60.0);
+                        double c_arrive = roundTo2Dps(b_leave + (airbornTimes[j][k] + delayTimes[j][k])/ 60.0);
+
                         String time = a_leave + "-" + b_arrive + "-" + b_leave + "-" + c_arrive;
                         flight_paths.add(flight);
                         flight_times.add(time);
@@ -98,6 +99,20 @@ public class DataGenerator {
                     airbornTimes[i][j] = timeFromIToJ;
                 }
             }
+            in.close();
+
+            File delayTimeFile = new File("Delay-Times.txt");
+            in = new Scanner(delayTimeFile);
+            delayTimes = new double[NUM_AIRPORTS][NUM_AIRPORTS];
+            for (int i = 0; i < NUM_AIRPORTS; i++) {
+                for (int j = 0; j < NUM_AIRPORTS; j++) {
+                    double timeFromIToJ = in.nextDouble();
+                    System.out.print(timeFromIToJ + "\t");
+                    delayTimes[i][j] = timeFromIToJ;
+                }
+                System.out.println();
+            }
+            in.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

@@ -10,7 +10,7 @@ public class DataGenerator {
     public static HashMap<String, Integer> airportIds;
     //Key = airport-airport (from-to). Value = {departure, capacity etc...}
     public static HashMap<String, List<FlightInfo>> flightData;
-    public static ArrayList<Itinerary> passengerItinerary;
+    public static ArrayList<Itinerary> passengerItineraries;
     public static String[] airports = {"ORD","JFK","LAX","MIA","ATL","IAH"};
     public static double[][] airbornTimes;
     public static double[][] delayTimes;
@@ -27,7 +27,8 @@ public class DataGenerator {
         setup();
         generateData();
 //        printData();
-        printItinerary();
+//        printItinerary();
+        printMissedConnections();
     }
 
     public static void generateData() {
@@ -37,11 +38,10 @@ public class DataGenerator {
                     if (i != j && k != j) {
                         //Create schedule
                         double a_leave = roundTo2Dps(Math.max(generateNormalizedDeparture(), 0));
-                        double b_arrive = roundTo2Dps(a_leave + airbornTimes[i][j]/ 60.0);
+                        double b_arrive = roundTo2Dps(a_leave + airbornTimes[i][j]);
                         double b_leave = roundTo2Dps(b_arrive + TAXI_TIME + Math.max(0, gaussianTaxiOverhead()));
                         //TODO: Change to reflect delays
-                        double b_arrive_with_delay = roundTo2Dps(b_arrive + delayTimes[i][j]/ 60.0);
-                        double c_arrive = roundTo2Dps(b_leave + (airbornTimes[j][k])/ 60.0);
+                        double c_arrive = roundTo2Dps(b_leave + (airbornTimes[j][k]));
 
                         //Create mapping of flights
                         //TODO: make flight capacities reflect some distribution + hard/soft constraints
@@ -99,7 +99,7 @@ public class DataGenerator {
                         FlightInfo flight2Candidate = candidatesForFlight2.get(sequence2[j]);
                         if (flight1Candidate.arrival <= TRANSIT_TIME + flight2Candidate.departure &&
                                 !flight1Candidate.isFull() && !flight2Candidate.isFull()) {
-                            passengerItinerary.add(new Itinerary(flight1Candidate, flight2Candidate));
+                            passengerItineraries.add(new Itinerary(flight1Candidate, flight2Candidate));
                             flight1Candidate.load++;
                             flight2Candidate.load++;
                             matched = true;
@@ -109,10 +109,29 @@ public class DataGenerator {
             }
             passengerId++;
         }
+
+        //Add delays
+        for (Map.Entry entry : flightData.entrySet()) {
+            List<FlightInfo> flightInfos = (List<FlightInfo>) entry.getValue();
+            for (FlightInfo flightInfo : flightInfos) {
+                flightInfo.addDelays();
+            }
+        }
+    }
+
+    public static void printMissedConnections() {
+        int numberMissed = 0;
+        for (Itinerary i : passengerItineraries) {
+            if (i.flightInfo1.arrival > i.flightInfo2.departure) {
+                System.out.println("Missed connection:\n" + i);
+                numberMissed++;
+            }
+        }
+        System.out.println("NUMBER MISSED: " + numberMissed);
     }
 
     public static void printItinerary() {
-        for (Itinerary i : passengerItinerary) {
+        for (Itinerary i : passengerItineraries) {
             System.out.println(i);
         }
     }
@@ -158,7 +177,7 @@ public class DataGenerator {
     private static void setup() {
         airportIds = new HashMap<>();
         flightData = new HashMap<>();
-        passengerItinerary = new ArrayList<>();
+        passengerItineraries = new ArrayList<>();
 
         random = new Random();
         for (int i = 0; i < NUM_AIRPORTS; i++) {
@@ -171,7 +190,7 @@ public class DataGenerator {
             airbornTimes = new double[NUM_AIRPORTS][NUM_AIRPORTS];
             for (int i = 0; i < NUM_AIRPORTS; i++) {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
-                    double timeFromIToJ = in.nextDouble();
+                    double timeFromIToJ = in.nextDouble() / 60.0;
                     airbornTimes[i][j] = timeFromIToJ;
                 }
             }
@@ -182,7 +201,7 @@ public class DataGenerator {
             delayTimes = new double[NUM_AIRPORTS][NUM_AIRPORTS];
             for (int i = 0; i < NUM_AIRPORTS; i++) {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
-                    double timeFromIToJ = in.nextDouble();
+                    double timeFromIToJ = in.nextDouble() / 60.0;
                     delayTimes[i][j] = timeFromIToJ;
                 }
             }

@@ -29,6 +29,7 @@ public class DataGenerator {
 //        printData();
 //        printItinerary();
         printMissedConnections();
+        printAverageLoad();
     }
 
     public static void generateData() {
@@ -117,6 +118,19 @@ public class DataGenerator {
                 flightInfo.addDelays();
             }
         }
+    }
+
+    public static void printAverageLoad() {
+        double sumRatio = 0;
+        int totalFlights = 0;
+        for (Map.Entry entry : flightData.entrySet()) {
+            List<FlightInfo> flightInfos = (List<FlightInfo>) entry.getValue();
+            for (FlightInfo flightInfo : flightInfos) {
+                sumRatio += flightInfo.load / flightInfo.capacity;
+                totalFlights++;
+            }
+        }
+        System.out.println("Average load ratio: " + sumRatio/totalFlights);
     }
 
     public static void printMissedConnections() {
@@ -220,7 +234,5 @@ public class DataGenerator {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-//        System.out.println(Arrays.deepToString(airbornTimes));
     }
-
 }

@@ -7,7 +7,8 @@ public class FlightInfo implements Comparable<FlightInfo> {
 
     private static int nextId = 0;
 
-    HashMap<FlightInfo, Integer> preFlights;
+    HashMap<Integer, Integer> preFlightPassengers;
+    ArrayList<FlightInfo> preFlights;
     String fromTo;
     double ticketedDeparture;
     double ticketedArrival;
@@ -21,7 +22,8 @@ public class FlightInfo implements Comparable<FlightInfo> {
     boolean delayAdded;
 
     public FlightInfo(String fromTo, double ticketedDeparture, double ticketedArrival, int capacity) {
-        this.preFlights = new HashMap<>();
+        this.preFlightPassengers = new HashMap<>();
+        this.preFlights = new ArrayList<>();
         this.fromTo = fromTo;
         this.id = nextId++;
         this.ticketedDeparture = ticketedDeparture;
@@ -44,6 +46,10 @@ public class FlightInfo implements Comparable<FlightInfo> {
         else {
             System.out.println("Trying to add delay again");
         }
+    }
+
+    public int spaceLeft() {
+        return capacity - load;
     }
 
     public boolean isFull() {

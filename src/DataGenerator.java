@@ -106,12 +106,15 @@ public class DataGenerator {
                         if (flight1Candidate.ticketedArrival <= TRANSIT_TIME + flight2Candidate.ticketedDeparture &&
                                 !flight1Candidate.isFull() && !flight2Candidate.isFull()) {
                             passengerItineraries.add(new Itinerary(flight1Candidate, flight2Candidate));
-                            HashMap<FlightInfo, Integer> preFlightsForFlight2 = flight2Candidate.preFlights;
+
+                            //Update pre-flight info
+                            flight2Candidate.preFlights.add(flight1Candidate);
+                            HashMap<Integer, Integer> preFlightsForFlight2 = flight2Candidate.preFlightPassengers;
                             int numPassengersOnPreFlight = 1;
-                            if (preFlightsForFlight2.containsKey(flight1Candidate)) {
-                                numPassengersOnPreFlight += preFlightsForFlight2.get(flight1Candidate);
+                            if (preFlightsForFlight2.containsKey(flight1Candidate.id)) {
+                                numPassengersOnPreFlight += preFlightsForFlight2.get(flight1Candidate.id);
                             }
-                            preFlightsForFlight2.put(flight1Candidate, numPassengersOnPreFlight);
+                            preFlightsForFlight2.put(flight1Candidate.id, numPassengersOnPreFlight);
 
                             flight1Candidate.load++;
                             flight2Candidate.load++;

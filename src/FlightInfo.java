@@ -21,6 +21,23 @@ public class FlightInfo implements Comparable<FlightInfo> {
     int destination;
     boolean delayAdded;
 
+    public FlightInfo(String fromTo, double ticketedDeparture, double ticketedArrival, int capacity, int id) {
+        this.preFlightPassengers = new HashMap<>();
+        this.preFlights = new ArrayList<>();
+        this.fromTo = fromTo;
+        this.id = id;
+        this.ticketedDeparture = ticketedDeparture;
+        this.ticketedArrival = ticketedArrival;
+        this.realDeparture = ticketedDeparture;
+        this.realArrival = ticketedArrival;
+        this.capacity = capacity;
+        this.load = 0;
+        StringTokenizer stk = new StringTokenizer(fromTo, ":");
+        this.delayAdded = false;
+        this.source = DataGenerator.airportIds.get(stk.nextToken());
+        this.destination = DataGenerator.airportIds.get(stk.nextToken());
+    }
+
     public FlightInfo(String fromTo, double ticketedDeparture, double ticketedArrival, int capacity) {
         this.preFlightPassengers = new HashMap<>();
         this.preFlights = new ArrayList<>();

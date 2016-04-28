@@ -31,7 +31,7 @@ public class Rescheduler {
                 Collections.sort(alternativeFlight2);
                 for (FlightInfo flightInfo : alternativeFlight2) {
 //                    System.out.print("flightInfo = " + flightInfo.realDeparture);
-                    if (!flightInfo.isFull()) {
+                    if (!flightInfo.isFull() && flightInfo.realDeparture > f1.realArrival + DataGenerator.TRANSIT_TIME) {
                         i.flightInfo2 = flightInfo;
                         flightInfo.load++;
                         f2.load--;
@@ -70,16 +70,22 @@ public class Rescheduler {
             Itinerary itinerary = passengerItineraries.get(i);
             FlightInfo f1 = itinerary.flightInfo1;
             FlightInfo f2 = itinerary.flightInfo2;
+            FlightInfo f1Copy = null;
+            FlightInfo f2Copy = null;
 
             ArrayList<FlightInfo> candidates1 = (ArrayList<FlightInfo>) flightData.get(f1.fromTo);
+            for (FlightInfo flightInfo : candidates1) {
+                if (flightInfo.id == f1.id) {
+                    f1Copy = flightInfo;
+                }
+            }
 
-            FlightInfo f1Copy = new FlightInfo(f1.fromTo,
-            f1.ticketedDeparture, f1.ticketedArrival, f1.capacity, f1.id);
-            f1Copy.addDelays();
-
-            FlightInfo f2Copy = new FlightInfo(f2.fromTo,
-                    f2.ticketedDeparture, f2.ticketedArrival, f2.capacity, f2.id);
-            f2Copy.addDelays();
+            ArrayList<FlightInfo> candidates2 = (ArrayList<FlightInfo>) flightData.get(f2.fromTo);
+            for (FlightInfo flightInfo : candidates2) {
+                if (flightInfo.id == f2.id) {
+                    f2Copy = flightInfo;
+                }
+            }
 
             Itinerary copy = new Itinerary(f1Copy, f2Copy);
             itinerariesCopy.add(copy);
@@ -131,7 +137,8 @@ public class Rescheduler {
                     Collections.sort(alternativeFlight2);
                     for (int i = 0; newRemPassengers > 0 && i < alternativeFlight2.size(); i++) {
                         FlightInfo flightInfo = alternativeFlight2.get(i);
-                        if (flightInfo.realDeparture > currentFlight.realDeparture && !flightInfo.isFull()) {
+                        if (flightInfo.realDeparture > preFlightToReschedule.realArrival + DataGenerator.TRANSIT_TIME
+                                && !flightInfo.isFull()) {
                             int spaceLeft = flightInfo.spaceLeft();
                             int reAssigned = Math.min(newRemPassengers, spaceLeft);
                             newRemPassengers -= reAssigned;
@@ -162,8 +169,48 @@ public class Rescheduler {
                 System.out.println("simplePTD = " + simplePTD);
             }
         }
-        System.out.println(simpleTotal);
-        System.out.println(smrgolTotal);
-        System.out.println("Ratio: " + smrgolTotal / simpleTotal);
+
+        // Make changes again
+        for (Itinerary i : itinerariesCopy) {
+            FlightInfo f1 = i.flightInfo1;
+            FlightInfo f2 = i.flightInfo2;
+
+            // If missing connection, reschedule on earliest flight with seats
+            if (f1.realArrival > f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+                String flight2 = f2.fromTo;
+                List<FlightInfo> alternativeFlight2 = flightData.get(flight2);
+                Collections.sort(alternativeFlight2);
+                for (FlightInfo flightInfo : alternativeFlight2) {
+//                    System.out.print("flightInfo = " + flightInfo.realDeparture);
+                    if (!flightInfo.isFull() &&
+                            flightInfo.realDeparture > f1.realArrival + DataGenerator.TRANSIT_TIME) {
+                        i.flightInfo2 = flightInfo;
+                        flightInfo.load++;
+                        f2.load--;
+                        break;
+                    }
+                }
+//                System.out.println();
+            }
+        }
+
+        // Calculate PTD
+        double ptd2 = 0;
+        for (Itinerary i : itinerariesCopy) {
+            FlightInfo f1 = i.flightInfo1;
+            FlightInfo f2 = i.flightInfo2;
+            if (f1.realArrival <= f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+                ptd2 += f2.realArrival - f2.ticketedArrival;
+            }
+            else {
+                ptd2 += MAX_DELAY;
+            }
+        }
+
+        System.out.println(ptd1);
+        System.out.println(ptd2);
+//        System.out.println(simpleTotal);
+//        System.out.println(smrgolTotal);
+//        System.out.println("Ratio: " + smrgolTotal / simpleTotal);
     }
 }

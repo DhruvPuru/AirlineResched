@@ -103,7 +103,7 @@ public class DataGenerator {
                     for (int j = 0; j < sequence2.length && !matched; j++) {
                         FlightInfo flight1Candidate = candidatesForFlight1.get(sequence1[i]);
                         FlightInfo flight2Candidate = candidatesForFlight2.get(sequence2[j]);
-                        if (flight1Candidate.ticketedArrival <= TRANSIT_TIME + flight2Candidate.ticketedDeparture &&
+                        if (flight1Candidate.ticketedArrival + TRANSIT_TIME <= flight2Candidate.ticketedDeparture &&
                                 !flight1Candidate.isFull() && !flight2Candidate.isFull()) {
                             passengerItineraries.add(new Itinerary(flight1Candidate, flight2Candidate));
 
@@ -151,7 +151,7 @@ public class DataGenerator {
     public int printMissedConnections() {
         int numberMissed = 0;
         for (Itinerary i : passengerItineraries) {
-            if (i.flightInfo1.realArrival > i.flightInfo2.realDeparture + TRANSIT_TIME) {
+            if (i.flightInfo1.realArrival + TRANSIT_TIME > i.flightInfo2.realDeparture) {
 //                System.out.println("Missed connection:\n" + i);
                 numberMissed++;
             }

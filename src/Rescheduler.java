@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -25,7 +24,7 @@ public class Rescheduler {
             FlightInfo f2 = i.flightInfo2;
 
             // If missing connection, reschedule on earliest flight with seats
-            if (f1.realArrival > f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+            if (f1.realArrival + DataGenerator.TRANSIT_TIME> f2.realDeparture) {
                 String flight2 = f2.fromTo;
                 List<FlightInfo> alternativeFlight2 = originalFlightData.get(flight2);
                 Collections.sort(alternativeFlight2);
@@ -46,7 +45,7 @@ public class Rescheduler {
         for (Itinerary i : passengerItineraries) {
             FlightInfo f1 = i.flightInfo1;
             FlightInfo f2 = i.flightInfo2;
-            if (f1.realArrival <= f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+            if (f1.realArrival + DataGenerator.TRANSIT_TIME <= f2.realDeparture) {
                 ptd1 += f2.realArrival - f2.ticketedArrival;
             }
             else {
@@ -110,7 +109,7 @@ public class Rescheduler {
                 Collections.reverse(listOfPreFlights);
                 // If flight is on time to make connection, no need to reschedule
                 FlightInfo latestPreFlight = listOfPreFlights.get(0);
-                if (latestPreFlight.realArrival <= DataGenerator.TRANSIT_TIME + currentFlight.realDeparture) {
+                if (latestPreFlight.realArrival + DataGenerator.TRANSIT_TIME <= currentFlight.realDeparture) {
                     continue;
                 }
 
@@ -119,7 +118,7 @@ public class Rescheduler {
                 // Look at latest preflights in decreasing order of arrival time, starting with second latest
                 for (int i = 1; i < listOfPreFlights.size(); i++) {
                     FlightInfo currentPreFlight = listOfPreFlights.get(i);
-                    if (currentPreFlight.realArrival <= DataGenerator.TRANSIT_TIME + currentFlight.realDeparture) {
+                    if (currentPreFlight.realArrival + DataGenerator.TRANSIT_TIME <= currentFlight.realDeparture) {
                         break;
                     }
                     preFlightsToReschedule.add(currentPreFlight);
@@ -176,7 +175,7 @@ public class Rescheduler {
             FlightInfo f2 = i.flightInfo2;
 
             // If missing connection, reschedule on earliest flight with seats
-            if (f1.realArrival > f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+            if (f1.realArrival + DataGenerator.TRANSIT_TIME> f2.realDeparture) {
                 String flight2 = f2.fromTo;
                 List<FlightInfo> alternativeFlight2 = flightData.get(flight2);
                 Collections.sort(alternativeFlight2);
@@ -199,7 +198,7 @@ public class Rescheduler {
         for (Itinerary i : itinerariesCopy) {
             FlightInfo f1 = i.flightInfo1;
             FlightInfo f2 = i.flightInfo2;
-            if (f1.realArrival <= f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+            if (f1.realArrival + DataGenerator.TRANSIT_TIME <= f2.realDeparture) {
                 ptd2 += f2.realArrival - f2.ticketedArrival;
             }
             else {
@@ -209,8 +208,5 @@ public class Rescheduler {
 
         System.out.println(ptd1);
         System.out.println(ptd2);
-//        System.out.println(simpleTotal);
-//        System.out.println(smrgolTotal);
-//        System.out.println("Ratio: " + smrgolTotal / simpleTotal);
     }
 }

@@ -1,4 +1,4 @@
-import javax.xml.crypto.Data;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -13,41 +13,77 @@ public class Rescheduler {
         int missed;
         HashMap<String, List<FlightInfo>> flightData;
         ArrayList<Itinerary> passengerItineraries;
-        // Simple algorithm
-//        dataGenerator = new DataGenerator();
-//        missed = dataGenerator.printMissedConnections();
-//        flightData = dataGenerator.flightData;
-//        passengerItineraries = dataGenerator.passengerItineraries;
-//
-//        for (Itinerary i : passengerItineraries) {
-//            FlightInfo f1 = i.flightInfo1;
-//            FlightInfo f2 = i.flightInfo2;
-//
-//            // If missing connection, reschedule on earliest flight with seats
-//            if (f1.realArrival > f2.realDeparture + DataGenerator.TRANSIT_TIME) {
-//                String flight2 = f2.fromTo;
-//                List<FlightInfo> alternativeFlight2 = flightData.get(flight2);
-//                Collections.sort(alternativeFlight2);
-//                for (FlightInfo flightInfo : alternativeFlight2) {
-////                    System.out.print("flightInfo = " + flightInfo.realDeparture);
-//                    if (!flightInfo.isFull()) {
-//                        i.flightInfo2 = flightInfo;
-//                        flightInfo.load++;
-//                        f2.load--;
-//                        break;
-//                    }
-//                }
-////                System.out.println();
-//            }
-//        }
-//        int newMissed = dataGenerator.printMissedConnections();
-//        System.out.println("Miss ratio: " + newMissed / missed);
 
-        //SMRGOL, assuming all constraints are soft
+        // Simple algorithm
         dataGenerator = new DataGenerator();
         missed = dataGenerator.printMissedConnections();
-        flightData = dataGenerator.flightData;
+        HashMap<String, List<FlightInfo>> originalFlightData = dataGenerator.flightData;
         passengerItineraries = dataGenerator.passengerItineraries;
+
+        for (Itinerary i : passengerItineraries) {
+            FlightInfo f1 = i.flightInfo1;
+            FlightInfo f2 = i.flightInfo2;
+
+            // If missing connection, reschedule on earliest flight with seats
+            if (f1.realArrival > f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+                String flight2 = f2.fromTo;
+                List<FlightInfo> alternativeFlight2 = originalFlightData.get(flight2);
+                Collections.sort(alternativeFlight2);
+                for (FlightInfo flightInfo : alternativeFlight2) {
+//                    System.out.print("flightInfo = " + flightInfo.realDeparture);
+                    if (!flightInfo.isFull()) {
+                        i.flightInfo2 = flightInfo;
+                        flightInfo.load++;
+                        f2.load--;
+                        break;
+                    }
+                }
+//                System.out.println();
+            }
+        }
+        // Calculate PTD
+        double ptd1 = 0;
+        for (Itinerary i : passengerItineraries) {
+            FlightInfo f1 = i.flightInfo1;
+            FlightInfo f2 = i.flightInfo2;
+            if (f1.realArrival <= f2.realDeparture + DataGenerator.TRANSIT_TIME) {
+                ptd1 += f2.realArrival - f2.ticketedArrival;
+            }
+            else {
+                ptd1 += MAX_DELAY;
+            }
+        }
+
+        int newMissed = dataGenerator.printMissedConnections();
+        System.out.println("Miss ratio: " + newMissed / missed);
+
+        //Need to copy data to use same data set twice
+        //SMRGOL, assuming all constraints are soft
+        missed = dataGenerator.printMissedConnections();
+        flightData = new HashMap<String, List<FlightInfo>>();
+        for(Map.Entry<String, List<FlightInfo>> entry : originalFlightData.entrySet()) {
+            flightData.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+
+        ArrayList<Itinerary> itinerariesCopy = new ArrayList<Itinerary>();
+        for (int i = 0; i < passengerItineraries.size(); i++) {
+            Itinerary itinerary = passengerItineraries.get(i);
+            FlightInfo f1 = itinerary.flightInfo1;
+            FlightInfo f2 = itinerary.flightInfo2;
+
+            ArrayList<FlightInfo> candidates1 = (ArrayList<FlightInfo>) flightData.get(f1.fromTo);
+
+            FlightInfo f1Copy = new FlightInfo(f1.fromTo,
+            f1.ticketedDeparture, f1.ticketedArrival, f1.capacity, f1.id);
+            f1Copy.addDelays();
+
+            FlightInfo f2Copy = new FlightInfo(f2.fromTo,
+                    f2.ticketedDeparture, f2.ticketedArrival, f2.capacity, f2.id);
+            f2Copy.addDelays();
+
+            Itinerary copy = new Itinerary(f1Copy, f2Copy);
+            itinerariesCopy.add(copy);
+        }
 
         double smrgolTotal = 0;
         double simpleTotal = 0;
@@ -116,27 +152,11 @@ public class Rescheduler {
                 smrgolTotal += Math.min(smrgolPTD, simplePTD);
                 simpleTotal += simplePTD;
 
+                //If smrgol is better, make plane wait
                 if (smrgolPTD < simplePTD) {
                     currentFlight.realDeparture = newDeparture;
                     currentFlight.realArrival = newArrival;
                 }
-//                else {
-//                    for (FlightInfo preFlightToReschedule : preFlightsToReschedule) {
-//                        int newRemPassengers = preFlights.get(preFlightToReschedule.id);
-//                        // While we manage to reschedule more passengers, keep going
-//                        String fromTo = currentFlight.fromTo;
-//                        List<FlightInfo> alternativeFlight2 = flightData.get(fromTo);
-//                        Collections.sort(alternativeFlight2);
-//                        for (int i = 0; newRemPassengers > 0 && i < alternativeFlight2.size(); i++) {
-//                            FlightInfo flightInfo = alternativeFlight2.get(i);
-//                            if (flightInfo.realDeparture > currentFlight.realDeparture && !flightInfo.isFull()) {
-//                                int spaceLeft = flightInfo.spaceLeft();
-//                                int reAssigned = Math.min(newRemPassengers, spaceLeft);
-//                                newRemPassengers -= reAssigned;
-//                            }
-//                        }
-//                    }
-//                }
 
                 System.out.println("smrgolPTD = " + smrgolPTD);
                 System.out.println("simplePTD = " + simplePTD);

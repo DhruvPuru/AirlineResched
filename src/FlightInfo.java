@@ -1,4 +1,4 @@
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Created by dhruvpurushottam on 4/26/16.
@@ -7,12 +7,13 @@ public class FlightInfo implements Comparable<FlightInfo> {
 
     private static int nextId = 0;
 
-    int id;
+    HashMap<FlightInfo, Integer> preFlights;
     String fromTo;
     double ticketedDeparture;
     double ticketedArrival;
     double realDeparture;
     double realArrival;
+    int id;
     int capacity;
     int load;
     int source;
@@ -20,6 +21,7 @@ public class FlightInfo implements Comparable<FlightInfo> {
     boolean delayAdded;
 
     public FlightInfo(String fromTo, double ticketedDeparture, double ticketedArrival, int capacity) {
+        this.preFlights = new HashMap<>();
         this.fromTo = fromTo;
         this.id = nextId++;
         this.ticketedDeparture = ticketedDeparture;

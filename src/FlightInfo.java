@@ -1,28 +1,31 @@
-import javax.xml.crypto.Data;
 import java.util.StringTokenizer;
 
 /**
  * Created by dhruvpurushottam on 4/26/16.
  */
-public class FlightInfo {
+public class FlightInfo implements Comparable<FlightInfo> {
 
     private static int nextId = 0;
 
     int id;
     String fromTo;
-    double departure;
-    double arrival;
+    double ticketedDeparture;
+    double ticketedArrival;
+    double realDeparture;
+    double realArrival;
     int capacity;
     int load;
     int source;
     int destination;
     boolean delayAdded;
 
-    public FlightInfo(String fromTo, double departure, double arrival, int capacity) {
+    public FlightInfo(String fromTo, double ticketedDeparture, double ticketedArrival, int capacity) {
         this.fromTo = fromTo;
         this.id = nextId++;
-        this.departure = departure;
-        this.arrival = arrival;
+        this.ticketedDeparture = ticketedDeparture;
+        this.ticketedArrival = ticketedArrival;
+        this.realDeparture = ticketedDeparture;
+        this.realArrival = ticketedArrival;
         this.capacity = capacity;
         this.load = 0;
         StringTokenizer stk = new StringTokenizer(fromTo, ":");
@@ -33,7 +36,7 @@ public class FlightInfo {
 
     public void addDelays() {
         if (!delayAdded) {
-            arrival += DataGenerator.delayTimes[source][destination];
+            realArrival += DataGenerator.roundTo2Dps(DataGenerator.delayTimes[source][destination]);
             delayAdded = true;
         }
         else {
@@ -46,6 +49,19 @@ public class FlightInfo {
     }
 
     public String toString() {
-        return id + ":" + fromTo + ":" + departure + ":" + arrival + ":" + load + "/" + capacity + "\n";
+        return id + ":" + fromTo + ":\n" + load + "/" + capacity + "\n"
+                + "Ticketed: " + ticketedDeparture + ":" + ticketedArrival + "\n" +
+                "Real: " + realDeparture + ":" + realArrival + "\n";
+    }
+
+    //Earlier departure is 'greater'
+    public int compareTo(FlightInfo other) {
+        if (this.realDeparture > other.realDeparture) {
+            return 1;
+        }
+        else if (this.realDeparture < other.realDeparture) {
+            return -1;
+        }
+        return 0;
     }
 }

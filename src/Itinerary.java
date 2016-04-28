@@ -12,6 +12,6 @@ public class Itinerary {
     FlightInfo flightInfo2;
 
     public String toString() {
-        return flightInfo1.toString() + "--->" + flightInfo2.toString() + "----------\n";
+        return flightInfo1.toString() + "--->\n" + flightInfo2.toString() + "----------\n";
     }
 }

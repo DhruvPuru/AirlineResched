@@ -7,32 +7,37 @@ import java.util.*;
  */
 public class DataGenerator {
 
+    //Key = airport-airport (from-to). Value = {ticketedDeparture, capacity etc...}
+    public HashMap<String, List<FlightInfo>> flightData;
+    public ArrayList<Itinerary> passengerItineraries;
+    public int passengerId;
+
     public static HashMap<String, Integer> airportIds;
-    //Key = airport-airport (from-to). Value = {departure, capacity etc...}
-    public static HashMap<String, List<FlightInfo>> flightData;
-    public static ArrayList<Itinerary> passengerItineraries;
     public static String[] airports = {"ORD","JFK","LAX","MIA","ATL","IAH"};
     public static double[][] airbornTimes;
     public static double[][] delayTimes;
     public static int[][] flightCapacities;
     public static Random random;
     public static int totalPassengers;
-    public static int passengerId;
 
     public static int NUM_AIRPORTS = airports.length;
     public static double TAXI_TIME = 0.5;
     public static double TRANSIT_TIME = 0.5;
 
-    public static void main (String[] args) {
+    public DataGenerator() {
         setup();
         generateData();
-//        printData();
-//        printItinerary();
-        printMissedConnections();
-        printAverageLoad();
     }
 
-    public static void generateData() {
+    public static void main (String[] args) {
+        DataGenerator dataGenerator = new DataGenerator();
+        dataGenerator.printData();
+        dataGenerator.printItinerary();
+//        printMissedConnections();
+//        printAverageLoad();
+    }
+
+    public void generateData() {
         for (int i = 0; i < NUM_AIRPORTS; i++) {
             for (int j = 0; j < NUM_AIRPORTS; j++) {
                 for (int k = 0; k < NUM_AIRPORTS; k++) {
@@ -98,7 +103,7 @@ public class DataGenerator {
                     for (int j = 0; j < sequence2.length && !matched; j++) {
                         FlightInfo flight1Candidate = candidatesForFlight1.get(sequence1[i]);
                         FlightInfo flight2Candidate = candidatesForFlight2.get(sequence2[j]);
-                        if (flight1Candidate.arrival <= TRANSIT_TIME + flight2Candidate.departure &&
+                        if (flight1Candidate.ticketedArrival <= TRANSIT_TIME + flight2Candidate.ticketedDeparture &&
                                 !flight1Candidate.isFull() && !flight2Candidate.isFull()) {
                             passengerItineraries.add(new Itinerary(flight1Candidate, flight2Candidate));
                             flight1Candidate.load++;
@@ -120,7 +125,7 @@ public class DataGenerator {
         }
     }
 
-    public static void printAverageLoad() {
+    public void printAverageLoad() {
         double sumRatio = 0;
         int totalFlights = 0;
         for (Map.Entry entry : flightData.entrySet()) {
@@ -133,18 +138,19 @@ public class DataGenerator {
         System.out.println("Average load ratio: " + sumRatio/totalFlights);
     }
 
-    public static void printMissedConnections() {
+    public int printMissedConnections() {
         int numberMissed = 0;
         for (Itinerary i : passengerItineraries) {
-            if (i.flightInfo1.arrival > i.flightInfo2.departure) {
-                System.out.println("Missed connection:\n" + i);
+            if (i.flightInfo1.realArrival > i.flightInfo2.realDeparture + TRANSIT_TIME) {
+//                System.out.println("Missed connection:\n" + i);
                 numberMissed++;
             }
         }
         System.out.println("NUMBER MISSED: " + numberMissed);
+        return numberMissed;
     }
 
-    public static void printItinerary() {
+    public void printItinerary() {
         for (Itinerary i : passengerItineraries) {
             System.out.println(i);
         }
@@ -182,16 +188,17 @@ public class DataGenerator {
         return 24 * Math.random();
     }
 
-    public static void printData() {
+    public void printData() {
         for (Map.Entry entry:flightData.entrySet()) {
             System.out.println(entry.getValue());
         }
     }
 
-    private static void setup() {
-        airportIds = new HashMap<>();
-        flightData = new HashMap<>();
-        passengerItineraries = new ArrayList<>();
+    public void setup() {
+        this.passengerId = 0;
+        this.airportIds = new HashMap<>();
+        this.flightData = new HashMap<>();
+        this.passengerItineraries = new ArrayList<>();
 
         random = new Random();
         for (int i = 0; i < NUM_AIRPORTS; i++) {
@@ -206,6 +213,7 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     double timeFromIToJ = in.nextDouble() / 60.0;
                     airbornTimes[i][j] = timeFromIToJ;
+//                    System.out.println("timeFromIToJ = " + timeFromIToJ);
                 }
             }
             in.close();
@@ -217,6 +225,7 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     double timeFromIToJ = in.nextDouble() / 60.0;
                     delayTimes[i][j] = timeFromIToJ;
+//                    System.out.println("timeFromIToJ = " + timeFromIToJ);
                 }
             }
             in.close();
@@ -228,6 +237,7 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     int capacityIToJ = in.nextInt();
                     flightCapacities[i][j] = capacityIToJ;
+//                    System.out.println("capacityIToJ = " + capacityIToJ);
                 }
             }
             in.close();

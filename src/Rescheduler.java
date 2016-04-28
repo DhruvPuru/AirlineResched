@@ -49,6 +49,8 @@ public class Rescheduler {
         flightData = dataGenerator.flightData;
         passengerItineraries = dataGenerator.passengerItineraries;
 
+        double smrgolTotal = 0;
+        double simpleTotal = 0;
         //Iterate over all flights, examine pre-flights and passengers on it.
         for (Map.Entry<String, List<FlightInfo>> entry : flightData.entrySet()) {
             List<FlightInfo> flights = entry.getValue();
@@ -111,10 +113,13 @@ public class Rescheduler {
                 double newArrival = currentFlight.realArrival + (newDeparture - currentFlight.realDeparture);
                 double smrgolPTD = currentFlight.load * (newArrival - currentFlight.ticketedArrival);
 
-//                if (smrgolPTD < simplePTD) {
-//                    currentFlight.realDeparture = newDeparture;
-//                    currentFlight.realArrival = newArrival;
-//                }
+                smrgolTotal += Math.min(smrgolPTD, simplePTD);
+                simpleTotal += simplePTD;
+
+                if (smrgolPTD < simplePTD) {
+                    currentFlight.realDeparture = newDeparture;
+                    currentFlight.realArrival = newArrival;
+                }
 //                else {
 //                    for (FlightInfo preFlightToReschedule : preFlightsToReschedule) {
 //                        int newRemPassengers = preFlights.get(preFlightToReschedule.id);
@@ -137,5 +142,8 @@ public class Rescheduler {
                 System.out.println("simplePTD = " + simplePTD);
             }
         }
+        System.out.println(simpleTotal);
+        System.out.println(smrgolTotal);
+        System.out.println("Ratio: " + smrgolTotal / simpleTotal);
     }
 }

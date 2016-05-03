@@ -47,11 +47,9 @@ public class DataGenerator {
                         double a_leave = roundTo2Dps(Math.max(generateNormalizedDeparture(), 0));
                         double b_arrive = roundTo2Dps(a_leave + airbornTimes[i][j]);
                         double b_leave = roundTo2Dps(b_arrive + TAXI_TIME + Math.max(0, gaussianTaxiOverhead()));
-                        //TODO: Change to reflect delays
                         double c_arrive = roundTo2Dps(b_leave + (airbornTimes[j][k]));
 
                         //Create mapping of flights
-                        //TODO: make flight capacities reflect some distribution + hard/soft constraints
                         String flight1 = airports[i] + ":" + airports[j];
                         FlightInfo flightInfo1 = new FlightInfo(flight1, a_leave, b_arrive, flightCapacities[i][j]);
                         String flight2 = airports[j] + ":" + airports[k];
@@ -153,7 +151,6 @@ public class DataGenerator {
         int numberMissed = 0;
         for (Itinerary i : passengerItineraries) {
             if (i.flightInfo1.realArrival + TRANSIT_TIME > i.flightInfo2.realDeparture) {
-//                System.out.println("Missed connection:\n" + i);
                 numberMissed++;
             }
         }
@@ -224,7 +221,6 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     double timeFromIToJ = in.nextDouble() / 60.0;
                     airbornTimes[i][j] = timeFromIToJ;
-//                    System.out.println("timeFromIToJ = " + timeFromIToJ);
                 }
             }
             in.close();
@@ -236,7 +232,6 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     double timeFromIToJ = in.nextDouble() / 60.0;
                     delayTimes[i][j] = timeFromIToJ;
-//                    System.out.println("timeFromIToJ = " + timeFromIToJ);
                 }
             }
             in.close();
@@ -248,21 +243,21 @@ public class DataGenerator {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
                     int capacityIToJ = in.nextInt();
                     flightCapacities[i][j] = capacityIToJ;
-//                    System.out.println("capacityIToJ = " + capacityIToJ);
                 }
             }
             in.close();
 
-            File percentageLateFile = new File("flight-capacities.txt");
+            File percentageLateFile = new File("percentage_late.txt");
             in = new Scanner(percentageLateFile);
             percentageLate = new double[NUM_AIRPORTS][NUM_AIRPORTS];
             for (int i = 0; i < NUM_AIRPORTS; i++) {
                 for (int j = 0; j < NUM_AIRPORTS; j++) {
-                    double percentageIToJ = in.nextDouble();
+                    double percentageIToJ = in.nextDouble() / 100;
                     percentageLate[i][j] = percentageIToJ;
                 }
             }
             in.close();
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

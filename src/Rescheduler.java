@@ -10,6 +10,7 @@ public class Rescheduler {
     public static void main(String[] args) {
         DataGenerator dataGenerator;
         int missed;
+        int delayed = 0;
         HashMap<String, List<FlightInfo>> flightData;
         ArrayList<Itinerary> passengerItineraries;
 
@@ -53,11 +54,10 @@ public class Rescheduler {
         }
 
         int newMissed = dataGenerator.printMissedConnections();
-        System.out.println("Miss ratio: " + newMissed / missed);
+        System.out.println("Miss ratio: " + newMissed / (missed * 1.0));
 
         //Need to copy data to use same data set twice
         //SMRGOL, assuming all constraints are soft
-        missed = dataGenerator.printMissedConnections();
         flightData = new HashMap<String, List<FlightInfo>>();
         for(Map.Entry<String, List<FlightInfo>> entry : originalFlightData.entrySet()) {
             flightData.put(entry.getKey(), new ArrayList<>(entry.getValue()));
@@ -161,6 +161,7 @@ public class Rescheduler {
                 if (smrgolPTD < simplePTD) {
                     currentFlight.realDeparture = newDeparture;
                     currentFlight.realArrival = newArrival;
+                    delayed++;
                 }
 //                System.out.println("smrgolPTD = " + smrgolPTD);
 //                System.out.println("simplePTD = " + simplePTD);
@@ -202,6 +203,8 @@ public class Rescheduler {
             }
         }
 
+        missed = dataGenerator.printMissedConnections();
+        System.out.println("delayed = " + delayed);
         System.out.println("Simple: " + ptd1);
         System.out.println("SMRGOL: " + ptd2);
     }

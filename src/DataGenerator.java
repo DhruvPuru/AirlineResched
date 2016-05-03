@@ -17,6 +17,7 @@ public class DataGenerator {
     public static double[][] airbornTimes;
     public static double[][] delayTimes;
     public static int[][] flightCapacities;
+    public static double[][] percentageLate;
     public static Random random;
     public static int totalPassengers;
 
@@ -70,7 +71,7 @@ public class DataGenerator {
                         }
                         sameJourneyAsFlight2.add(flightInfo2);
                         //Update total passengers in model
-                        totalPassengers += Math.min(flightCapacities[i][j], flightCapacities[j][k]);
+                        totalPassengers += Math.min(flightCapacities[i][j], flightCapacities[j][k]) + 5;
                     }
                 }
             }
@@ -187,7 +188,7 @@ public class DataGenerator {
     }
 
     public static double gaussianTaxiOverhead() {
-        return random.nextGaussian();
+        return 0.5 + (0.5 * random.nextGaussian());
     }
 
     public static double generateNormalizedDeparture() {
@@ -248,6 +249,17 @@ public class DataGenerator {
                     int capacityIToJ = in.nextInt();
                     flightCapacities[i][j] = capacityIToJ;
 //                    System.out.println("capacityIToJ = " + capacityIToJ);
+                }
+            }
+            in.close();
+
+            File percentageLateFile = new File("flight-capacities.txt");
+            in = new Scanner(percentageLateFile);
+            percentageLate = new double[NUM_AIRPORTS][NUM_AIRPORTS];
+            for (int i = 0; i < NUM_AIRPORTS; i++) {
+                for (int j = 0; j < NUM_AIRPORTS; j++) {
+                    double percentageIToJ = in.nextDouble();
+                    percentageLate[i][j] = percentageIToJ;
                 }
             }
             in.close();

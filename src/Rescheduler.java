@@ -18,6 +18,7 @@ public class Rescheduler {
         missed = dataGenerator.printMissedConnections();
         HashMap<String, List<FlightInfo>> originalFlightData = dataGenerator.flightData;
         passengerItineraries = dataGenerator.passengerItineraries;
+        dataGenerator.printAverageLoad();
 
         for (Itinerary i : passengerItineraries) {
             FlightInfo f1 = i.flightInfo1;
@@ -29,7 +30,6 @@ public class Rescheduler {
                 List<FlightInfo> alternativeFlight2 = originalFlightData.get(flight2);
                 Collections.sort(alternativeFlight2);
                 for (FlightInfo flightInfo : alternativeFlight2) {
-//                    System.out.print("flightInfo = " + flightInfo.realDeparture);
                     if (!flightInfo.isFull() && flightInfo.realDeparture > f1.realArrival + DataGenerator.TRANSIT_TIME) {
                         i.flightInfo2 = flightInfo;
                         flightInfo.load++;
@@ -37,7 +37,6 @@ public class Rescheduler {
                         break;
                     }
                 }
-//                System.out.println();
             }
         }
         // Calculate PTD
@@ -163,9 +162,8 @@ public class Rescheduler {
                     currentFlight.realDeparture = newDeparture;
                     currentFlight.realArrival = newArrival;
                 }
-
-                System.out.println("smrgolPTD = " + smrgolPTD);
-                System.out.println("simplePTD = " + simplePTD);
+//                System.out.println("smrgolPTD = " + smrgolPTD);
+//                System.out.println("simplePTD = " + simplePTD);
             }
         }
 
@@ -180,7 +178,6 @@ public class Rescheduler {
                 List<FlightInfo> alternativeFlight2 = flightData.get(flight2);
                 Collections.sort(alternativeFlight2);
                 for (FlightInfo flightInfo : alternativeFlight2) {
-//                    System.out.print("flightInfo = " + flightInfo.realDeparture);
                     if (!flightInfo.isFull() &&
                             flightInfo.realDeparture > f1.realArrival + DataGenerator.TRANSIT_TIME) {
                         i.flightInfo2 = flightInfo;
@@ -189,7 +186,6 @@ public class Rescheduler {
                         break;
                     }
                 }
-//                System.out.println();
             }
         }
 
@@ -206,7 +202,7 @@ public class Rescheduler {
             }
         }
 
-        System.out.println(ptd1);
-        System.out.println(ptd2);
+        System.out.println("Simple: " + ptd1);
+        System.out.println("SMRGOL: " + ptd2);
     }
 }

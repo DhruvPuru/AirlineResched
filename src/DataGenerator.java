@@ -74,6 +74,8 @@ public class DataGenerator {
                 }
             }
         }
+        System.out.println("");
+        System.out.println("totalPassengers = " + totalPassengers);
 
         //Map passenger to flight path from airport A to B to C s.t A != B and B!= C
         //TODO:remove assumption that all passengers have connecting flights
